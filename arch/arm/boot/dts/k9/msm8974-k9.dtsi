@@ -9,7 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  */
-
+/include/ "../msm8974pro.dtsi"
 /include/ "msm8974-k9-audio.dtsi"
 /include/ "msm8974-k9-camera.dtsi"
 /include/ "msm8974-k9-camera-sensor.dtsi"
@@ -44,6 +44,10 @@
 		qcom,ion-heap@23 { 
 			qcom,memory-fixed = <0x04600000 0x2100000>;
 		};
+	};
+
+	qcom,bcl {
+		compatible = "qcom,bcl";
 	};
 
 	/delete-node/ qcom,qseecom@7b00000;
@@ -215,3 +219,4 @@
 &spi_epm {
   status = "disabled";
 };
+

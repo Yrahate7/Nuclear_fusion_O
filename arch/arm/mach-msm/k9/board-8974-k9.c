@@ -88,12 +88,12 @@ void __init msm_8974_reserve(void)
 	int ret;
 	phys_addr_t start;
 	struct membank* bank;
-
+	
 	if (meminfo.nr_banks < 2) {
 		pr_err("%s: not enough membank\n", __func__);
 		return;
 	}
-
+	
 	bank = &meminfo.bank[1];
 	start = bank->start + SZ_1M + OPPO_PERSISTENT_RAM_SIZE;
 	ret = memblock_remove(start, SZ_1M);

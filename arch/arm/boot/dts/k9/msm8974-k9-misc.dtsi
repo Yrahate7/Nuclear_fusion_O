@@ -20,6 +20,7 @@
 			compatible = "imagis,isa1200";
 			label = "vibrator";
 			imagis,chip-en;
+			imagis,smart-en;
 			imagis,need-pwm-clk;
 			imagis,ext-clk-en;
 			imagis,hap-en-gpio = <&msmgpio 86 0x00>;

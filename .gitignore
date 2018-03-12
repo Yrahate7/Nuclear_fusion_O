@@ -87,3 +87,9 @@ GTAGS
 
 # Generated source files
 smd_rpc_sym.c
+
+Builds/
+
+StarCity_defconfig
+
+StarCity_defconfig\.old

@@ -50,12 +50,14 @@
 		fpc_fpc1020@0 {
 			compatible = "fpc,fpc1020";
 			reg = <0>;
-			spi-max-frequency = <8000000>;
+			spi-max-frequency = <10000000>;
 			interrupt-parent = <&msmgpio>;
 			interrupts = <74 0x1>;
 			fpc,gpio_irq  = <74>;
 			fpc,gpio_reset = <33>;
 			fpc,gpio_cs  = <25>;
+			fpc,enable-wakeup;
+			fpc,vddtx_mv;
 			vdd_ana-supply = <&spi_eth_vreg>;
 			vdd_io-supply = <&spi_eth_vreg>;
 		};

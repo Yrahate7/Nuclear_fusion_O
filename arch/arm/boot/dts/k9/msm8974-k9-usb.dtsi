@@ -23,7 +23,7 @@
 			/* cc_logic,function-switch-gpio1 = <&msmgpio 32 0x00>; */
 			cc_logic,function-switch-gpio2 = <&msmgpio 31 0x00>;
 			cc_logic,usb-ss-gpio = <&msmgpio 53 0x00>;
-			/* cc_logic,power-control = <&msmgpio 34 0x00>; */
+			cc_logic,power-control = <&msmgpio 34 0x00>;
 			cc_logic,i2c-pull-up;
 
 			cclogic,chip1 {

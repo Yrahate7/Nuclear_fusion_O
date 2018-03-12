@@ -90,7 +90,7 @@
 	taiko_codec {
 		qcom,cdc-micbias2-ext-cap;
 		cdc-vdd-spkdrv-supply = <&pm8941_boost>;
-		qcom,cdc-vdd-spkdrv-voltage = <5000000 5000000>;
+		qcom,cdc-vdd-spkdrv-voltage = <5000000 5000000>; 
 		qcom,cdc-vdd-spkdrv-current = <1250000>;
 		qcom,cdc-on-demand-supplies = "cdc-vdd-spkdrv";
 		qcom,cdc-micbias-cfilt3-mv = <1800>;

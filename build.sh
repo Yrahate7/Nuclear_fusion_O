@@ -21,8 +21,8 @@ export CROSS_COMPILE=$KERNEL_TOOLCHAIN
 export ARCH=arm
 
 # Clean build always lol
-#echo "**** Cleaning ****"
-#make clean && make mrproper
+echo "**** Cleaning ****"
+make clean && make mrproper
 
 echo "**** Kernel defconfig is set to $KERNEL_DEFCONFIG ****"
 make $KERNEL_DEFCONFIG
