@@ -21,7 +21,7 @@ RADIOACTIVE_VER="$BASE_RADIOACTIVE_VER$VER"
 
 # Vars
 export LOCALVERSION=~`echo $RADIOACTIVE_VER`
-export CROSS_COMPILE=${HOME}/Android/toolchain/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-cortex_a15-linux-gnueabihf-
+export CROSS_COMPILE=${HOME}/Android/toolchain/gcc-linaro-5.4.1-2017.01-x86_64_arm-eabi/bin/arm-eabi-
 export ARCH=arm
 export SUBARCH=arm
 export KBUILD_BUILD_USER=${USER}
@@ -33,7 +33,7 @@ REPACK_DIR="${HOME}/Android/z1"
 PATCH_DIR="${HOME}/Android/z1/patch"
 MODULES_DIR="${HOME}/Android/z1/modules"
 ZIP_MOVE="${HOME}/Android/releases"
-ZIMAGE_DIR="${HOME}/Android/Radioactive-kernel-HAM/arch/arm/boot"
+ZIMAGE_DIR="${HOME}/Android/android_kernel_cyanogen_msm8974-8.x/arch/arm/boot"
 # Functions
 function clean_all {
 		rm -rf $MODULES_DIR/*
