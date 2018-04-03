@@ -9,7 +9,7 @@ restore='\033[0m'
 clear
 
 # Resources
-THREAD="-j$(grep -c ^processor /proc/cpuinfo)"
+THREAD="-j4"
 KERNEL="zImage"
 DTBIMAGE="dtb"
 DEFCONFIG="StarCity_defconfig"
@@ -21,7 +21,7 @@ RADIOACTIVE_VER="$BASE_RADIOACTIVE_VER$VER"
 
 # Vars
 export LOCALVERSION=~`echo $RADIOACTIVE_VER`
-export CROSS_COMPILE=${HOME}/Android/toolchain/gcc-linaro-5.4.1-2017.01-x86_64_arm-eabi/bin/arm-eabi-
+export CROSS_COMPILE=${HOME}/Android/toolchain/arm-cortex_a15-linux-gnueabihf-linaro_4.9.4-2015.06/bin/arm-cortex_a15-linux-gnueabihf-
 export ARCH=arm
 export SUBARCH=arm
 export KBUILD_BUILD_USER=${USER}
@@ -42,7 +42,7 @@ function clean_all {
 		rm -rf $DTBIMAGE
 		git reset --hard > /dev/null 2>&1
 		git clean -f -d > /dev/null 2>&1
-		cd $KERNEL_DIR
+		cd $KERNEL_DIR		
 		echo
 		make clean && make mrproper
 }
