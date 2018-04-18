@@ -64,9 +64,9 @@
 #define BUTTON_MIN 0x8000
 #define STATUS_REL_DETECTION 0x0C
 
-#define HS_DETECT_PLUG_TIME_MS (5 * 1000)
-#define ANC_HPH_DETECT_PLUG_TIME_MS (5 * 1000)
-#define HS_DETECT_PLUG_INERVAL_MS 100
+#define HS_DETECT_PLUG_TIME_MS (8 * 1000)
+#define ANC_HPH_DETECT_PLUG_TIME_MS (3 * 1000)
+#define HS_DETECT_PLUG_INERVAL_MS 250 
 #define SWCH_REL_DEBOUNCE_TIME_MS 50
 #define SWCH_IRQ_DEBOUNCE_TIME_US 5000
 #define BTN_RELEASE_DEBOUNCE_TIME_MS 25
@@ -1491,6 +1491,13 @@ wcd9xxx_cs_find_plug_type(struct wcd9xxx_mbhc *mbhc,
 	for (i = 0, d = dt; i < sz; i++, d++) {
 		if ((i > 0) && !d->mic_bias && !d->swap_gnd &&
 		    (d->_type != dprev->_type)) {
+				if ((i == 1 && dprev->_type == PLUG_TYPE_HIGH_HPH &&
+						d->_type == PLUG_TYPE_HEADSET) ||
+				(i == 3 && dprev->_type == PLUG_TYPE_HEADSET &&
+						d->_type == PLUG_TYPE_HIGH_HPH)) {
+				pr_debug("%s: HIGH_HPH special case, continue", __func__);
+				continue;
+			}
 			pr_debug("%s: Invalid, inconsistent types\n", __func__);
 			type = PLUG_TYPE_INVALID;
 			goto exit;

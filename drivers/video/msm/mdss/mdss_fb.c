@@ -58,7 +58,7 @@
 #include "mdss_livedisplay.h"
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
-#define MDSS_FB_NUM 3
+#define MDSS_FB_NUM 5
 #else
 #define MDSS_FB_NUM 2
 #endif

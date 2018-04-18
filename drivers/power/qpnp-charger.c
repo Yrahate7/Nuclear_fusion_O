@@ -4237,7 +4237,7 @@ int get_vbat_averaged(struct qpnp_chg_chip *chip, int sample_count)
 }
 
 #ifdef SUPPORT_QPNP_VBUS_OVP
-#define VBUS_MAX_THRESHOLD		6500000
+#define VBUS_MAX_THRESHOLD		13500000
 #define VBUS_SAMPLE_COUNT		16
 int qpnp_check_vbus_ovp(int *vusb_uv)
 {

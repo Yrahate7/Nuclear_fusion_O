@@ -192,7 +192,7 @@ __dabt_svc:
 	svc_entry
 	mov	r2, sp
 	dabt_helper
-
+	THUMB(	ldr	r5, [sp, #S_PSR]	)	@ potentially updated CPSR
 	@
 	@ IRQs off again before pulling preserved data off the stack
 	@
