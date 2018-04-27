@@ -676,7 +676,6 @@ int mdss_dsi_on(struct mdss_panel_data *pdata)
 #ifdef CONFIG_MACH_SHENQI_K9
 	if (gpio_is_valid(ctrl_pdata->disp_vsp_gpio) && gpio_is_valid(ctrl_pdata->disp_vsn_gpio)) {
 		gpio_direction_output(ctrl_pdata->disp_vsp_gpio, 1);
-		udelay(100);
 		wmb();
 		gpio_direction_output(ctrl_pdata->disp_vsn_gpio, 1);
 		//msleep(4);

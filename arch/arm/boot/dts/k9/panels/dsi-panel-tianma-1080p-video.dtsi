@@ -190,7 +190,7 @@
 		qcom,mdss-dsi-bl-pmic-pwm-frequency = <50>;
 		qcom,mdss-dsi-bl-pmic-bank-select = <2>;
 		qcom,mdss-dsi-pwm-gpio = <&pm8941_gpios 26 0>;
-		qcom,mdss-dsi-reset-sequence = <1 20>, <0 200>, <1 20>;
+		qcom,mdss-dsi-reset-sequence = <1 2>, <0 1>, <1 2>;
 		qcom,mdss-pan-physical-width-dimension = <68>;
 		qcom,mdss-pan-physical-height-dimension = <121>;
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
