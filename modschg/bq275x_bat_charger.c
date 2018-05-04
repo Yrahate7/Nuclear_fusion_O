@@ -265,8 +265,7 @@ struct bq27x00_device_info {
 
 	struct bq27x00_reg_cache cache;
 	int charge_design_full;
-    int chrg_type;
-
+    	int chrg_type;
 	unsigned long last_update;
 	struct delayed_work work;
 	struct delayed_work ovp_work;
@@ -293,6 +292,7 @@ struct bq27x00_device_info {
 	int is_rom_mode;
 	int fw_dw_done;
 	int is_suspend;
+	int fw_done;
 	int soc_reset;
 	int reset_p;
 	int present_check_count;
@@ -2670,7 +2670,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->reset_p = 0;
 	di->present_check_count = 0;
 	di->thermal_mitigation = 0;
-
+	di->fw_done = 0;
 	i2c_set_clientdata(client, di);
 
 	if (gpio_is_valid(platform_data->usb_sw_gpio)) {
@@ -2977,9 +2977,19 @@ static int bq27531_op_thermal_mitigation(struct bq27x00_device_info *di, int lev
 
 static int bq27531_config_charging_current(struct bq27x00_device_info *di, int level)
 {
+	int ret;	
 	printk("%s: chrg_type=%d, level=%d, vbus_ovp=%d, call=%d\n",
 		__func__, di->chrg_type, level, di->vbus_ovp, g_call_status);
-
+	if(di->fw_done == 0)
+	{
+	di->fw_done = 1;
+	ret = bq27531_data_flash_write(di,0x4a,7,70);
+		if(ret < 0)
+			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
+		else
+		printk("firmware upgrade for 2.9 amp done");
+	bq27531_soc_reset();
+	}
  	if (di->vbus_ovp == 1)
 		return 0;
 
