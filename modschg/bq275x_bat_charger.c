@@ -65,7 +65,7 @@
 
 #define SUPPORT_QPNP_VBUS_OVP
 
-//#define BQ_WRITE_TEMP
+#define BQ_WRITE_TEMP
 
 #define BQ27530_REG_CNTL		0x00 /*control*/
 #define BQ27x00_REG_TEMP		0x06 /*Temperature*/
@@ -1323,7 +1323,6 @@ static void bq27x00_battery_poll(struct work_struct *work)
 {
 	int vbus_state;
 	int ret;
-	int ext;
 	struct bq27x00_device_info *di =
 		container_of(work, struct bq27x00_device_info, work.work);
 
@@ -1338,9 +1337,21 @@ static void bq27x00_battery_poll(struct work_struct *work)
 	}
 		
 	bq27x00_update(di);
+
+	if(di->fw_done == 0)
+	{
+	di->fw_done = 1;
+	ret = bq27531_data_flash_write(di,0x4a,7,255);
+		if(ret < 0)
+			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
+		else
+		printk("firmware upgrade for 4 amp done");
+	bq27531_soc_reset();
+	}
+
 	
-	dev_info(di->dev, "%s:chg_en=%d,chg-type=%d,mains_online=%d,usb_online=%d,usb_ovp=%d,chg_st=%d.\n",
-		__func__,di->board->chg_en_flag,di->chrg_type,di->mains_online,di->usb_online,di->usb_ovp,di->chg_state);
+	dev_info(di->dev, "%s:chg_en=%d,chg-type=%d,mains_online=%d,usb_online=%d,usb_ovp=%d,chg_st=%d fw_done=%d.\n",
+		__func__,di->board->chg_en_flag,di->chrg_type,di->mains_online,di->usb_online,di->usb_ovp,di->chg_state,di->fw_done);
 	if(di->mains_online || di->usb_online || (di->usb_ovp == USBIN_OVP)){//usb present
 		if (!wake_lock_active(&di->wakelock)) {
 			printk("%s: add wake lock in main or usb online\n", __func__);
@@ -1671,7 +1682,7 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 			ret = bq27x00_battery_health(di,val);
 			break;
 		case POWER_SUPPLY_PROP_TECHNOLOGY:
-			val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
+			val->intval = POWER_SUPPLY_TECHNOLOGY_LIPO;
 			break;
 		case POWER_SUPPLY_PROP_CYCLE_COUNT:
 			ret = bq27x00_simple_value(di->cache.cycle_count, val);
@@ -2976,20 +2987,10 @@ static int bq27531_op_thermal_mitigation(struct bq27x00_device_info *di, int lev
 }
 
 static int bq27531_config_charging_current(struct bq27x00_device_info *di, int level)
-{
-	int ret;	
+{	
+	int ret;
 	printk("%s: chrg_type=%d, level=%d, vbus_ovp=%d, call=%d\n",
 		__func__, di->chrg_type, level, di->vbus_ovp, g_call_status);
-	if(di->fw_done == 0)
-	{
-	di->fw_done = 1;
-	ret = bq27531_data_flash_write(di,0x4a,7,70);
-		if(ret < 0)
-			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
-		else
-		printk("firmware upgrade for 2.9 amp done");
-	bq27531_soc_reset();
-	}
  	if (di->vbus_ovp == 1)
 		return 0;
 
