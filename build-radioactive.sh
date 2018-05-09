@@ -15,8 +15,8 @@ DTBIMAGE="dtb"
 DEFCONFIG="StarCity_defconfig"
 
 # Kernel Details
-BASE_RADIOACTIVE_VER="Radioactive-Reborn"
-VER="_V3.21"
+BASE_RADIOACTIVE_VER="Nuclear_Fusion_O"
+VER="1.0"
 RADIOACTIVE_VER="$BASE_RADIOACTIVE_VER$VER"
 
 # Vars
