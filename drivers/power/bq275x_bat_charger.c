@@ -3051,7 +3051,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
         case POWER_SUPPLY_TYPE_BATTERY:
 		break;
 	default:
-		printk("%s: defalt chg_type %d", __func__, di->chrg_type);
+		printk("%s: default chg_type %d", __func__, di->chrg_type);
 		break;
 	}
 	
