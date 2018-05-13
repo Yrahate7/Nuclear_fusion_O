@@ -203,8 +203,8 @@
 #define BATT_VENDOR_LG			1
 #define BATT_VENDOR_ATL_AND_DUMY	2
 
-#define BATT_FW_VER_LG		0xAA09
-#define BATT_FW_VER_ATL		0xAB03
+#define BATT_FW_VER_LG		0xAC02
+#define BATT_FW_VER_ATL		0xAD02
 
 extern long qpnp_batt_id;
 int soc_prev = 0;
