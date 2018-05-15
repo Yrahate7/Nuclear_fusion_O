@@ -296,7 +296,10 @@ struct bq27x00_device_info {
 	int soc_reset;
 	int reset_p;
 	int present_check_count;
-
+	int incurrmax;
+	int incurrtrim;
+	int incurrset;
+	int vinmin;
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	struct delayed_work vbus_work;
 	int vbus_ovp;
@@ -1582,14 +1585,14 @@ static int bq27x00_batt_property_is_writeable(struct power_supply *psy,
 {
 	switch (psp) {
 	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
-	case POWER_SUPPLY_PROP_SYSTEM_TEMP_LEVEL:
+		return 1;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
+		return 1;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
+		return 1;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
-	case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
+		return 1;
 	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-	case POWER_SUPPLY_PROP_COOL_TEMP:
-	case POWER_SUPPLY_PROP_WARM_TEMP:
 		return 1;
 	default:
 		break;
@@ -1616,6 +1619,19 @@ static int bq27x00_battery_set_property(struct power_supply *psy,
                 }
         }
         break;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
+		di->incurrmax = val->intval;
+		break;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
+		di->incurrtrim = val->intval;
+		break;
+	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
+		di->incurrset = val->intval;
+		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+		di->vinmin = val->intval;
+		break;
+
     default:
         return -EINVAL;
     }
@@ -1705,16 +1721,16 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 		ret = bq27x00_battery_temperature(di, val);
 			break;
 		case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
-		val->intval = 100000;
+		val->intval = di->incurrmax;
 		break;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
-		val->intval = 34;
+		val->intval = di->incurrtrim;
 		break;
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
-	        val->intval = 1;
+	        val->intval = di->incurrset;
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		val->intval = 3000000;
+		val->intval = di->vinmin;
 		break;
 	case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
 		val->intval = 0;
@@ -2691,7 +2707,10 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->thermal_mitigation = 0;
 	di->fw_done = 0;
 	i2c_set_clientdata(client, di);
-
+	di->vinmin = 3000000;
+	di->incurrset = 1;
+	di->incurrtrim = 34;
+	di->incurrmax = 100000;
 	if (gpio_is_valid(platform_data->usb_sw_gpio)) {
 		retval = gpio_request(platform_data->usb_sw_gpio,
 				"chg_sw_gpio");
