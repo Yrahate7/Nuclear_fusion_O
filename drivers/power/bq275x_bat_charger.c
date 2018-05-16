@@ -300,6 +300,7 @@ struct bq27x00_device_info {
 	int incurrtrim;
 	int incurrset;
 	int vinmin;
+	int charge_type;
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	struct delayed_work vbus_work;
 	int vbus_ovp;
@@ -833,7 +834,7 @@ static void bq24192_set_chrg_type(struct bq27x00_device_info *di)
 	    break;
 #endif
 	default:
-	    printk("%s:defalt chg_type",__func__);
+	    printk("%s:default chg_type",__func__);
 	    break;
     } 
 }
@@ -1665,7 +1666,22 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 				val->intval = di->board->chg_en_flag;
 				break;
 		case POWER_SUPPLY_PROP_CHARGE_TYPE:
+		if(di->charge_type == 0)
+		{
+		val->intval = POWER_SUPPLY_CHARGE_TYPE_NONE;
+		}
+		if(di->charge_type == 1)
+		{
+		val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+		}
+		else if(di->charge_type == 2)
+		{
 		val->intval = POWER_SUPPLY_CHARGE_TYPE_FAST;
+		}
+		else if(di->charge_type == 3)
+		{
+		val->intval = POWER_SUPPLY_CHARGE_TYPE_TRICKLE;
+		}
 		break;
 		case POWER_SUPPLY_PROP_PRESENT:
 			ret = bq27x00_read(di, BQ27x00_REG_FLAGS, false);
@@ -2711,6 +2727,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->incurrset = 1;
 	di->incurrtrim = 34;
 	di->incurrmax = 100000;
+	di->charge_type = 0;
 	if (gpio_is_valid(platform_data->usb_sw_gpio)) {
 		retval = gpio_request(platform_data->usb_sw_gpio,
 				"chg_sw_gpio");
@@ -3024,6 +3041,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 	switch(di->chrg_type) {
         case POWER_SUPPLY_TYPE_USB_CDP:
 		bq27531_op_set_input_limit(di, IINLIM_1500);
+		di->charge_type = 1;
 		break;
         case POWER_SUPPLY_TYPE_USB_ACA:
         case POWER_SUPPLY_TYPE_USB_DCP:
@@ -3044,6 +3062,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 				bq27531_op_set_input_limit(di, IINLIM_3000);
 			
 			}
+		di->charge_type = 2;
 		break;
 		}
 		else
@@ -3061,6 +3080,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 				bq27531_op_set_input_limit(di, IINLIM_1500);
 			}
 		     }
+		di->charge_type = 2;
 		break;
 		#endif
 		if((level && !g_call_status) || (!boot_done))
@@ -3071,15 +3091,19 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 			else
 				bq27531_op_set_input_limit(di, IINLIM_1500);
 		}
+		di->charge_type = 2;
 		break;
         case POWER_SUPPLY_TYPE_USB:
 		bq27531_op_set_input_limit(di, IINLIM_500);
+		di->charge_type = 3;
 		break;
         case POWER_SUPPLY_TYPE_BATTERY:
+		di->charge_type = 0;
 		break;
 	default:
 		printk("%s: default chg_type %d", __func__, di->chrg_type);
 		break;
+		di->charge_type = 0;
 	}
 	
 	return 0;
