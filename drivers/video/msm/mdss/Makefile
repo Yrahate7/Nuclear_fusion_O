@@ -11,6 +11,7 @@ mdss-mdp-objs += mdss_mdp_rotator.o
 mdss-mdp-objs += mdss_mdp_overlay.o
 mdss-mdp-objs += mdss_mdp_splash_logo.o
 mdss-mdp-objs += mdss_mdp_wb.o
+obj-$(CONFIG_FB_MSM_MDSS) += lcd_notify.o
 obj-$(CONFIG_FB_MSM_MDSS) += mdss-mdp.o
 
 ifeq ($(CONFIG_FB_MSM_MDSS),y)
