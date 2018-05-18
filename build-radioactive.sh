@@ -16,7 +16,7 @@ DEFCONFIG="StarCity_defconfig"
 
 # Kernel Details
 BASE_RADIOACTIVE_VER="Nuclear_Fusion_O"
-VER="1.0"
+VER="0.1"
 RADIOACTIVE_VER="$BASE_RADIOACTIVE_VER$VER"
 
 # Vars
