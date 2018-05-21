@@ -884,81 +884,9 @@ static int bq27x00_battery_read_temp(struct bq27x00_device_info *di)
 	return temp;
 }
 
-static int bound_soc(int soc)
-{
-	soc = max(0, soc);
-	soc = min(100, soc);
-
-	return soc;
-}
-
-static int soc_remap(int soc,bool is_charging)
-{
-	int mapped_soc = 0;
-	if(soc >= 87)
-	{
-		mapped_soc = bound_soc(soc+2);
-		if(soc < 98)
-			return mapped_soc;
-		if(is_charging && soc != 100)
-			return 99;
-		else
-			return mapped_soc;
-	}
-	if(soc < 87 && soc >= 80)
-	{
-		return bound_soc(soc+1);
-	}
-	if(soc < 80 && soc >= 74)
-	{
-		return bound_soc(soc);
-	}
-#if 0
-	if(soc < 74 && soc >= 60)
-	{
-		return bound_soc(soc - 1);
-	}
-	if(soc < 60 && soc >= 36)
-	{
-		return bound_soc(soc - 2);
-	}
-	if(soc < 36 && soc >= 28)
-	{
-		return bound_soc(soc - 1);
-	}
-#else
-	if(soc < 74 && soc >= 28)
-	{
-		return bound_soc(soc);
-	}
-#endif
-	if(soc < 28 && soc >= 23)
-	{
-		return bound_soc(soc);
-	}
-	if(soc < 23 && soc >= 20)
-	{
-		return bound_soc(soc - 1);
-	}
-	if(soc < 20 && soc >= 4)
-	{
-		return bound_soc(soc - 2);
-	}
-	if(soc < 4 && soc >= 2)
-	{
-		return bound_soc(soc - 1);
-	}
-	if(soc < 2 && soc >= 0)
-	{
-		return bound_soc(soc);
-	}
-	return bound_soc(soc);
-}
-
-static int open_soc_remap = 1;
 static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
 {
-	int rsoc = -1, rsoc2 = -1;
+	int rsoc = -1;
 	int volt = -1;
 	int chrg_status,chrg_term_tim,chrg_term_curr;
 
@@ -966,13 +894,6 @@ static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
 	rsoc = bq27x00_read(di, BQ27500_REG_SOC, false);
 	if (rsoc < 0 || volt < 0 )
 			dev_err(di->dev, "error reading soc %d or volt %d\n",rsoc,volt);
-	else if(open_soc_remap == 1)
-		rsoc2 = soc_remap(rsoc,(di->chg_state == POWER_SUPPLY_STATUS_CHARGING || di->chg_state == POWER_SUPPLY_STATUS_FULL));
-
-	if ((di->chg_state == POWER_SUPPLY_STATUS_CHARGING || di->chg_state == POWER_SUPPLY_STATUS_FULL) && (rsoc2 > rsoc))
-		rsoc = rsoc2;
-	else if ((di->chg_state != POWER_SUPPLY_STATUS_CHARGING && di->chg_state != POWER_SUPPLY_STATUS_FULL) && (rsoc2 < rsoc))
-		rsoc = rsoc2;
 
 	//for calculate soc
 	if(rsoc >= 0 && rsoc <= 100){
