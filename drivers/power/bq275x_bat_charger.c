@@ -402,7 +402,7 @@ MODULE_PARM_DESC(fw_long_delay, "Get fw download delay");
 static int disable_charging_force = 0;
 static int chg_type = POWER_SUPPLY_TYPE_BATTERY;
 
-static unsigned int delay_t = 30000;//30s
+static unsigned int delay_t = 60000;//60s
 module_param(delay_t, uint, 0644);
 MODULE_PARM_DESC(delay_t, "The value is charge state update time");
 
@@ -892,8 +892,10 @@ static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
 
 	volt = bq27x00_read(di, BQ27x00_REG_VOLT, false);
 	rsoc = bq27x00_read(di, BQ27500_REG_SOC, false);
-	if (rsoc < 0 || volt < 0 )
-			dev_err(di->dev, "error reading soc %d or volt %d\n",rsoc,volt);
+	if (rsoc < 0)
+			dev_err(di->dev, "error reading soc %d \n",rsoc);
+	if (volt < 0)
+			dev_err(di->dev, "error reading volt %d \n",volt);	
 
 	//for calculate soc
 	if(rsoc >= 0 && rsoc <= 100){

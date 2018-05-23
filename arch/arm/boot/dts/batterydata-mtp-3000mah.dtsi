@@ -11,11 +11,12 @@
  */
 
 qcom,mtp-3000mah {
-	qcom,fcc-mah = <3000>;
+	qcom,fcc-mah = <4120>;
 	qcom,default-rbatt-mohm = <113>;
-	qcom,max-voltage-uv = <4200000>;
+	qcom,max-voltage-uv = <4400000>;
 	qcom,rbatt-capacitive-mohm = <50>;
-	qcom,v-cutoff-uv = <3400000>;
+	qcom,v-cutoff-uv = <3200000>;
+	qcom,flat-ocv-threshold-uv = <3800000>;
 	qcom,chg-term-ua = <200000>;
 	qcom,batt-id-kohm = <300>;
 
