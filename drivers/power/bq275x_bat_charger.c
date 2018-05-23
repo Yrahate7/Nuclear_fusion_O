@@ -301,6 +301,8 @@ struct bq27x00_device_info {
 	int incurrset;
 	int vinmin;
 	int charge_type;
+	int prev_temp;
+	int prev_level;
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	struct delayed_work vbus_work;
 	int vbus_ovp;
@@ -358,14 +360,14 @@ static enum power_supply_property bq24912_usb_props[] = {
 int g_call_status = 0;
 
 enum iinlim_level {
-    IINLIM_100 = 0,
-    IINLIM_150,
-    IINLIM_500,
-    IINLIM_900,
-    IINLIM_1200,
-    IINLIM_1500,
-    IINLIM_2000,
-    IINLIM_3000,
+    IINLIM_100 = 0,//0
+    IINLIM_150,//1
+    IINLIM_500,//2
+    IINLIM_900,//3
+    IINLIM_1200,//4
+    IINLIM_1500,//5
+    IINLIM_2000,//6
+    IINLIM_3000,//7
 };
 
 int fb_status = FB_BLANK_UNBLANK;
@@ -380,7 +382,7 @@ static int bq27531_soc_reset(void);
 static int bq27531_charge_hiz_reset(void);
 static inline int bq27x00_read(struct bq27x00_device_info *di, u8 reg,
 		bool single);
-
+int bq_cc(struct bq27x00_device_info *di);
 static unsigned int bc_fw = 0;
 static unsigned int uart_switch = 0;
 static unsigned int switch_to_uart = 0;
@@ -882,6 +884,67 @@ static int bq27x00_battery_read_temp(struct bq27x00_device_info *di)
 	}
 
 	return temp;
+}
+
+int bq_cc(struct bq27x00_device_info *di)
+{
+	//ff
+	int cachetemp,devtemp,dif;
+	cachetemp = bq27x00_battery_read_temp(di);
+	devtemp = cachetemp - 2731;
+	printk("cachetemp = %d , devtemp = %d",cachetemp,devtemp);
+	if(di->prev_temp == 0)
+	{
+	di->prev_temp = devtemp;
+	}
+	if(devtemp >= BATT_TEMP_MAX)
+	{
+	di->prev_level = 0;
+	return 1;//150
+	}
+	else
+	{
+		dif = devtemp - (di->prev_temp);
+		if(dif > 5) //if difference is greater than +5
+		{
+			di->prev_level = 3;
+			return 	3;//set iinlim to 900 
+		}
+		else if(dif < 0) //if difference is less than previous temp
+			{
+			di->prev_level = 7;
+			return 7;//iinlim3000
+			}
+		else if(dif == 0)
+			{
+			di->prev_level = 7;
+			return 7;
+			}
+		else if(dif > 4)
+			{
+			di->prev_level = 4;
+			return 4;//1200		
+			}
+		else if(dif > 3)
+			{
+			di->prev_level = 5;
+			return 	5;//1500	
+			}
+		else if(dif > 2)
+			{
+			di->prev_level = 6;
+			return 6;//2000	
+			}
+		else if(dif > 1)
+			{
+			return di->prev_level;
+			}
+		else
+		{
+		return 3;
+		}
+	}
+
 }
 
 static int bq27x00_battery_read_rsoc(struct bq27x00_device_info *di)
@@ -2651,6 +2714,8 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->incurrtrim = 34;
 	di->incurrmax = 100000;
 	di->charge_type = 0;
+	di->prev_temp = 0;
+	di->prev_level = 0;
 	if (gpio_is_valid(platform_data->usb_sw_gpio)) {
 		retval = gpio_request(platform_data->usb_sw_gpio,
 				"chg_sw_gpio");
@@ -2960,7 +3025,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		__func__, di->chrg_type, level, di->vbus_ovp, g_call_status);
  	if (di->vbus_ovp == 1)
 		return 0;
-
+	ret = bq_cc(di);
 	switch(di->chrg_type) {
         case POWER_SUPPLY_TYPE_USB_CDP:
 		bq27531_op_set_input_limit(di, IINLIM_1500);
@@ -2971,23 +3036,31 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
         case POWER_SUPPLY_TYPE_UNKNOWN:
 		#ifdef CONFIG_FORCE_FAST_CHARGE			
 		if (force_fast_charge)
-		if((level && !g_call_status) || (!boot_done))
 			{
-			bq27531_op_set_input_limit(di, IINLIM_3000);
+			switch (ret)
+				{
+					case 1:
+					bq27531_op_set_input_limit(di, IINLIM_150);
+					break;
+					case 3: 
+					bq27531_op_set_input_limit(di, IINLIM_900);
+					break;
+					case 4:
+					bq27531_op_set_input_limit(di, IINLIM_1200);
+					break;//fd
+					case 5:
+					bq27531_op_set_input_limit(di, IINLIM_1500);
+					break;
+					case 6:
+					bq27531_op_set_input_limit(di, IINLIM_2000);
+					break;
+					case 7:
+					bq27531_op_set_input_limit(di, IINLIM_3000);
+					break;
+				}
+			di->charge_type = 2;
+			break;			
 			}
-		else {
-			if (g_call_status)
-			{
-				bq27531_op_set_input_limit(di, IINLIM_3000);
-			}
-			else
-			{
-				bq27531_op_set_input_limit(di, IINLIM_3000);
-			
-			}
-		di->charge_type = 2;
-		break;
-		}
 		else
 		if((level && !g_call_status) || (!boot_done))
 			{
