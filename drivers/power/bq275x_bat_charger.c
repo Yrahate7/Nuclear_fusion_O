@@ -184,18 +184,18 @@
 #define CLT_GPADC_VOLTAGE_SAMPLE_COUNT	10
 
 
-#define BQ24190_IC_VERSION			0x4
-#define BQ24192_IC_VERSION			0x5
-#define BQ24292I_IC_VERSION			0x3
-#define BQ24192I_IC_VERSION			0x3
+#define BQ24190_IC_VERSION	0x4
+#define BQ24192_IC_VERSION	0x5
+#define BQ24292I_IC_VERSION	0x3
+#define BQ24192I_IC_VERSION	0x3
 
-#define BATT_TEMP_MAX			495
-#define BATT_VOLT_MAX			4425
-#define BATT_VOLT_MIN			3100
+#define BATT_TEMP_MAX		495
+#define BATT_VOLT_MAX		4425
+#define BATT_VOLT_MIN		3100
 
 #define BQ_I2C_VTG_MIN_UV	1800000
 #define BQ_I2C_VTG_MAX_UV	1800000
-#define BQ_I2C_LOAD_UA	10000
+#define BQ_I2C_LOAD_UA		10000
 #define BQ_I2C_LPM_LOAD_UA	10
 
 #define BQ_BATT_TEMP_OFFSET	20
@@ -905,7 +905,7 @@ int bq_cc(struct bq27x00_device_info *di)
 	else
 	{
 		dif = devtemp - (di->prev_temp);
-		if(dif > 5) //if difference is greater than +5
+		if(dif > 50) //if difference is greater than +5.0 deg celcius
 		{
 			di->prev_level = 3;
 			return 	3;//set iinlim to 900 
@@ -920,22 +920,22 @@ int bq_cc(struct bq27x00_device_info *di)
 			di->prev_level = 7;
 			return 7;
 			}
-		else if(dif > 4)
+		else if(dif > 40)
 			{
 			di->prev_level = 4;
 			return 4;//1200		
 			}
-		else if(dif > 3)
+		else if(dif > 30)
 			{
 			di->prev_level = 5;
 			return 	5;//1500	
 			}
-		else if(dif > 2)
+		else if(dif > 20)
 			{
 			di->prev_level = 6;
 			return 6;//2000	
 			}
-		else if(dif > 1)
+		else if(dif > 10)
 			{
 			return di->prev_level;
 			}
@@ -1360,7 +1360,7 @@ static void bq27x00_battery_poll(struct work_struct *work)
 		if(wake_lock_active(&di->wakelock))
 			wake_unlock(&di->wakelock);
 		if((di->cache.temperature-2731)>580)
-			schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t/3));//10s
+			schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t/12));//5s
 		else
 			schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//30s
 	}
@@ -3037,7 +3037,16 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		#ifdef CONFIG_FORCE_FAST_CHARGE			
 		if (force_fast_charge)
 			{
-			switch (ret)
+		if(ret == 1 )
+			{
+			bq27531_op_thermal_mitigation(di, 1);
+			printk("High temperature. Disable charging");
+			}
+		else
+		{
+			bq27531_op_thermal_mitigation(di, 0);
+		}
+		switch (ret)
 				{
 					case 1:
 					bq27531_op_set_input_limit(di, IINLIM_150);

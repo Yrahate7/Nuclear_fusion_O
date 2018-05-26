@@ -826,6 +826,10 @@ static bool is_battery_full(struct qpnp_bms_chip *chip)
 #define BAT_PRES_BIT		BIT(7)
 static bool is_battery_present(struct qpnp_bms_chip *chip)
 {
+
+#ifdef CONFIG_BATTERY_BQ27530
+return true;
+#else
 	union power_supply_propval ret = {0,};
 	int rc;
 	u8 batt_pres;
@@ -855,10 +859,11 @@ static bool is_battery_present(struct qpnp_bms_chip *chip)
 	/* Default to false if the battery power supply is not registered. */
 	pr_debug("battery power supply is not registered\n");
 	return false;
+#endif
 }
 
 static int get_battery_insertion_ocv_uv(struct qpnp_bms_chip *chip)
-{
+{#else
 	union power_supply_propval ret = {0,};
 	int rc, vbat;
 
@@ -988,7 +993,7 @@ static int estimate_ocv(struct qpnp_bms_chip *chip, int batt_temp)
 	return ocv_est_uv;
 }
 
-#define MIN_IAVG_MA 250
+#define MIN_IAVG_MA 100
 static void reset_for_new_battery(struct qpnp_bms_chip *chip, int batt_temp)
 {
 	chip->last_ocv_uv = chip->insertion_ocv_uv;
