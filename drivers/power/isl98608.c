@@ -87,10 +87,7 @@ if(lcdmodule == 2){
         pr_err("%s: Cannot get panel configuration\n", __func__);
         goto end;
     }
-
-    if (strstr(pan_cfg->arg_cfg, "nt35532")) {
         intersil_2c_transfer ( client );
-    }
 end:
     return 0;
 }

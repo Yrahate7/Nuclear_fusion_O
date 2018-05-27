@@ -1352,7 +1352,7 @@ static void bq27x00_battery_poll(struct work_struct *work)
 			bq27531_config_charging_current(di, 0);
 		else if (fb_status == FB_BLANK_POWERDOWN)
 			bq27531_config_charging_current(di, 1);
-		schedule_delayed_work(&di->work, msecs_to_jiffies(20000));//20s
+		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//20s
 #else
 		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//30s
 #endif

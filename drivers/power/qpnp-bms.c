@@ -863,7 +863,7 @@ return true;
 }
 
 static int get_battery_insertion_ocv_uv(struct qpnp_bms_chip *chip)
-{#else
+{
 	union power_supply_propval ret = {0,};
 	int rc, vbat;
 
