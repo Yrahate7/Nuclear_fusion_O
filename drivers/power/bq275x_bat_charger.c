@@ -344,6 +344,7 @@ static enum power_supply_property bq27x00_battery_props[] = {
 	POWER_SUPPLY_PROP_VOLTAGE_MIN,
 	POWER_SUPPLY_PROP_COOL_TEMP,
 	POWER_SUPPLY_PROP_WARM_TEMP,
+	POWER_SUPPLY_PROP_VOLTAGE_OCV,
 
 };
 static enum power_supply_property bq24912_mains_props[] = {
@@ -892,7 +893,7 @@ int bq_cc(struct bq27x00_device_info *di)
 	int cachetemp,devtemp,dif;
 	cachetemp = bq27x00_battery_read_temp(di);
 	devtemp = cachetemp - 2731;
-	printk("cachetemp = %d , devtemp = %d",cachetemp,devtemp);
+	printk("cachetemp = %d , devtemp = %d \n",cachetemp,devtemp);
 	if(di->prev_temp == 0)
 	{
 	di->prev_temp = devtemp;
@@ -1737,6 +1738,15 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
 		val->intval = 0;
 		break;
+	case POWER_SUPPLY_PROP_VOLTAGE_OCV:
+		if(di->board->chg_en_flag == 1 )
+		{
+		return -EINVAL;
+		}		
+		else
+		{
+		ret = bq27x00_battery_voltage(di, val); 
+		}
 		default:
 			return -EINVAL;
 	}
@@ -2434,12 +2444,12 @@ ssize_t  fg_info_get(struct device *dev, struct device_attribute *attr,
     max_capa = bq27x00_read(bqdi, 0x62, false);
     ret = sprintf(buf, "%4X,%X,%d,%d,%d,%d,%d\n",
 			0xD006,
-			df_ver_get(bqdi),//aa09
-			gpio_get_value(bqdi->board->chg_psel_gpio),//1(notchg)0(chg)
-			bqdi->vbus_ovp,//0(notchg)0(chg)
-			bqdi->chrg_type,//1(notchg)6(usbchg)
-			bqdi->battery_vendor_index,//1
-			max_capa);//4143
+			df_ver_get(bqdi),
+			gpio_get_value(bqdi->board->chg_psel_gpio),
+			bqdi->vbus_ovp,
+			bqdi->chrg_type,
+			bqdi->battery_vendor_index,
+			max_capa);
 
     return ret;
 }

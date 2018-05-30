@@ -194,7 +194,7 @@
 		qcom,mdss-pan-physical-width-dimension = <68>;
 		qcom,mdss-pan-physical-height-dimension = <121>;
 		qcom,mdss-dsi-pan-enable-dynamic-fps;
-		qcom,mdss-dsi-pan-fps-update = "dfps_suspend_resume_mode";
+		qcom,mdss-dsi-pan-fps-update = "dfps_immediate_clk_mode";
 		qcom,ulps-enabled;
 		qcom,suspend-ulps-enabled;
 	};
