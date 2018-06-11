@@ -1199,8 +1199,8 @@ static void fg_reg_show(struct bq27x00_device_info *di)
 	chrg_fault = bq27x00_read(di, BQ24192_REG9_FAULT,true);//0x7e
 	dev_info(di->dev,"charger chrg_status=0x%x,ctrl=0x%x,chrg_por=0x%x,curr=0x%x,volt=0x%x,status=0x%x,fault=0x%x.\n",
 		chg_status,ctrl,chrg_por,current_chg,chrg_volt,status,chrg_fault);
-	dev_info(di->dev,"nac=0x%x,fac=0x%x,rcuf=0x%x,rcf=0x%x,fccu=0x%x,fccf=0x%x.\n soc=%d,flags=0x%x,tc=0x%x,temp=%d,current_now=%d,voltage=%d,max_capa=%d.\n",
-					nac,fac,rcuf,rcf,fccu,fccf,soc,flags,tc,temp,current_now,voltage,max_capa);
+	dev_info(di->dev,"nac=0x%x,fac=0x%x,rcuf=0x%x,rcf=0x%x,fccu=0x%x,fccf=0x%x.\n soc=%d,flags=0x%x,tc=0x%x,temp=%d,current_now=%d,voltage=%d,max_capa=%d chgvolt=%d.\n",
+					nac,fac,rcuf,rcf,fccu,fccf,soc,flags,tc,temp,current_now,voltage,max_capa,fg_pc_volt);
 }
 
 static void bq27x00_update(struct bq27x00_device_info *di)
@@ -1353,9 +1353,9 @@ static void bq27x00_battery_poll(struct work_struct *work)
 			bq27531_config_charging_current(di, 0);
 		else if (fb_status == FB_BLANK_POWERDOWN)
 			bq27531_config_charging_current(di, 1);
-		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//20s
+		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t/3));//20s
 #else
-		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//30s
+		schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t));//60s
 #endif
 	}else{
 		if(wake_lock_active(&di->wakelock))
@@ -1574,14 +1574,6 @@ static int bq27x00_batt_property_is_writeable(struct power_supply *psy,
 	switch (psp) {
 	case POWER_SUPPLY_PROP_CHARGING_ENABLED:
 		return 1;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
-		return 1;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
-		return 1;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
-		return 1;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		return 1;
 	default:
 		break;
 	}
@@ -1607,19 +1599,6 @@ static int bq27x00_battery_set_property(struct power_supply *psy,
                 }
         }
         break;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
-		di->incurrmax = val->intval;
-		break;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
-		di->incurrtrim = val->intval;
-		break;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
-		di->incurrset = val->intval;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
-		di->vinmin = val->intval;
-		break;
-
     default:
         return -EINVAL;
     }
@@ -1725,27 +1704,28 @@ static int bq27x00_battery_get_property(struct power_supply *psy,
 			break;
 		case POWER_SUPPLY_PROP_INPUT_CURRENT_MAX:
 		val->intval = di->incurrmax;
-		break;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
+			break;
+		case POWER_SUPPLY_PROP_INPUT_CURRENT_TRIM:
 		val->intval = di->incurrtrim;
-		break;
-	case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
+			break;
+		case POWER_SUPPLY_PROP_INPUT_CURRENT_SETTLED:
 	        val->intval = di->incurrset;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_MIN:
+			break;
+		case POWER_SUPPLY_PROP_VOLTAGE_MIN:
 		val->intval = di->vinmin;
-		break;
-	case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
+			break;
+		case POWER_SUPPLY_PROP_VCHG_LOOP_DBC_BYPASS:
 		val->intval = 0;
-		break;
-	case POWER_SUPPLY_PROP_VOLTAGE_OCV:
+			break;
+		case POWER_SUPPLY_PROP_VOLTAGE_OCV:
 		if(di->board->chg_en_flag == 1 )
 		{
-		return -EINVAL;
+			return 0;
 		}		
 		else
 		{
 		ret = bq27x00_battery_voltage(di, val); 
+			break;
 		}
 		default:
 			return -EINVAL;
@@ -2883,7 +2863,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	configure_fb_notifiler(di);
 #endif
   	bq27530_enable_charging(di, true);
-	schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t/30));//30s
+	schedule_delayed_work(&di->work, msecs_to_jiffies(delay_t/30));//20s
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	schedule_delayed_work(&di->vbus_work, msecs_to_jiffies(1000));
 #endif
@@ -3083,16 +3063,16 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		else
 		if((level && !g_call_status) || (!boot_done))
 			{
-			bq27531_op_set_input_limit(di, IINLIM_900);
+			bq27531_op_set_input_limit(di, IINLIM_2000);
 			}	
 		else {
 			if (g_call_status)
 			{
-				bq27531_op_set_input_limit(di, IINLIM_900);
+				bq27531_op_set_input_limit(di, IINLIM_2000);
 			}
 			else
 			{
-				bq27531_op_set_input_limit(di, IINLIM_1500);
+				bq27531_op_set_input_limit(di, IINLIM_3000);
 			}
 		     }
 		di->charge_type = 2;

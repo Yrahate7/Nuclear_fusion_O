@@ -14,7 +14,7 @@ qcom,palladium-batterydata {
 	qcom,fcc-mah = <4120>;
 	qcom,default-rbatt-mohm = <210>;
 	qcom,rbatt-capacitive-mohm = <50>;
-	qcom,flat-ocv-threshold-uv = <3800000>;
+	qcom,flat-ocv-threshold-uv = <3850000>;
 	qcom,max-voltage-uv = <4400000>;
 	qcom,v-cutoff-uv = <3200000>;
 	qcom,chg-term-ua = <200000>;
