@@ -188,7 +188,7 @@
 #define BQ24192_IC_VERSION	0x5
 #define BQ24292I_IC_VERSION	0x3
 #define BQ24192I_IC_VERSION	0x3
-
+#define BATT_TEMP_OVH		528
 #define BATT_TEMP_MAX		495
 #define BATT_VOLT_MAX		4425
 #define BATT_VOLT_MIN		3100
@@ -303,6 +303,7 @@ struct bq27x00_device_info {
 	int charge_type;
 	int prev_temp;
 	int prev_level;
+	int therm_mit;
 #ifdef SUPPORT_QPNP_VBUS_OVP
 	struct delayed_work vbus_work;
 	int vbus_ovp;
@@ -893,58 +894,75 @@ int bq_cc(struct bq27x00_device_info *di)
 	int cachetemp,devtemp,dif;
 	cachetemp = bq27x00_battery_read_temp(di);
 	devtemp = cachetemp - 2731;
-	printk("cachetemp = %d , devtemp = %d \n",cachetemp,devtemp);
+	printk("cachetemp = %d , devtemp = %d ,prev_temp = %d \n",cachetemp,devtemp,di->prev_temp);
 	if(di->prev_temp == 0)
 	{
 	di->prev_temp = devtemp;
 	}
-	if(devtemp >= BATT_TEMP_MAX)
+	if(devtemp >= BATT_TEMP_OVH)
 	{
+	bq27531_op_thermal_mitigation(di, 1);
+	printk("thermal mitigation, device protect mode\n");
+	di->therm_mit = 1;
 	di->prev_level = 0;
 	return 1;//150
 	}
 	else
 	{
-		dif = devtemp - (di->prev_temp);
-		if(dif > 50) //if difference is greater than +5.0 deg celcius
+		if(di->therm_mit == 1 && devtemp <= 430)
 		{
-			di->prev_level = 3;
-			return 	3;//set iinlim to 900 
+			bq27531_op_thermal_mitigation(di, 0);
+			printk("Unset thermal mitigation after device temp reduced \n");
+			di->therm_mit = 0;	
 		}
-		else if(dif < 0) //if difference is less than previous temp
-			{
-			di->prev_level = 7;
-			return 7;//iinlim3000
-			}
-		else if(dif == 0)
-			{
-			di->prev_level = 7;
-			return 7;
-			}
-		else if(dif > 40)
-			{
-			di->prev_level = 4;
-			return 4;//1200		
-			}
-		else if(dif > 30)
-			{
-			di->prev_level = 5;
-			return 	5;//1500	
-			}
-		else if(dif > 20)
-			{
-			di->prev_level = 6;
-			return 6;//2000	
-			}
-		else if(dif > 10)
-			{
-			return di->prev_level;
-			}
+		if(devtemp >= BATT_TEMP_MAX)
+		{
+			di->prev_level = 1;
+			return 2;//500
+		}
 		else
 		{
-		return 3;
+			dif = devtemp - (di->prev_temp);
+			if(dif > 50) //if difference is greater than +5.0 deg celcius
+			{
+				di->prev_level = 3;
+				return 	3;//set iinlim to 900 
+			}
+			else if(dif < 0) //if difference is less than previous temp
+				{
+				di->prev_level = 7;
+				return 7;//iinlim3000
+				}
+			else if(dif == 0)
+				{
+				di->prev_level = 7;
+				return 7;
+				}
+			else if(dif > 40)
+				{
+				di->prev_level = 4;
+				return 4;//1200		
+				}
+			else if(dif > 30)
+				{
+				di->prev_level = 5;
+				return 	5;//1500	
+				}
+			else if(dif > 20)
+				{
+				di->prev_level = 6;
+				return 6;//2000	
+				}
+			else if(dif > 10)
+				{
+				return di->prev_level;
+				}
+			else
+			{
+			return 4;
+			}
 		}
-	}
+	}	
 
 }
 
@@ -1332,11 +1350,21 @@ static void bq27x00_battery_poll(struct work_struct *work)
 	if(di->fw_done == 0)
 	{
 	di->fw_done = 1;
+	ret = bq27531_data_flash_write(di,0x4a,6,255);
+		if(ret < 0)
+			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
+		else
+		printk("firmware upgrade for 4 amp t1 done");	
 	ret = bq27531_data_flash_write(di,0x4a,7,255);
 		if(ret < 0)
 			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
 		else
-		printk("firmware upgrade for 4 amp done");
+		printk("firmware upgrade for 4 amp t2 done");
+	ret = bq27531_data_flash_write(di,0x4a,8,52);
+		if(ret < 0)
+			pr_err("%s:write err 4 ret=%d.\n",__func__,ret);
+		else
+		printk("firmware upgrade for 1.8 amp t3 done");
 	bq27531_soc_reset();
 	}
 
@@ -2706,6 +2734,7 @@ static int bq27x00_battery_probe(struct i2c_client *client,
 	di->charge_type = 0;
 	di->prev_temp = 0;
 	di->prev_level = 0;
+	di->therm_mit = 0;
 	if (gpio_is_valid(platform_data->usb_sw_gpio)) {
 		retval = gpio_request(platform_data->usb_sw_gpio,
 				"chg_sw_gpio");
@@ -3027,19 +3056,16 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		#ifdef CONFIG_FORCE_FAST_CHARGE			
 		if (force_fast_charge)
 			{
-		if(ret == 1 )
-			{
-			bq27531_op_thermal_mitigation(di, 1);
-			printk("High temperature. Disable charging");
-			}
-		else
-		{
-			bq27531_op_thermal_mitigation(di, 0);
-		}
-		switch (ret)
+				switch (ret)
 				{
+					case 0:
+					bq27531_op_set_input_limit(di, IINLIM_100);
+					break;			
 					case 1:
 					bq27531_op_set_input_limit(di, IINLIM_150);
+					break;
+					case 2: 
+					bq27531_op_set_input_limit(di, IINLIM_500);
 					break;
 					case 3: 
 					bq27531_op_set_input_limit(di, IINLIM_900);
@@ -3063,7 +3089,7 @@ static int bq27531_config_charging_current(struct bq27x00_device_info *di, int l
 		else
 		if((level && !g_call_status) || (!boot_done))
 			{
-			bq27531_op_set_input_limit(di, IINLIM_2000);
+			bq27531_op_set_input_limit(di, IINLIM_3000);
 			}	
 		else {
 			if (g_call_status)
